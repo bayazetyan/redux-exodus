@@ -1,0 +1,33 @@
+{
+  "name": "redux-exodus",
+  "version": "0.0.1",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/bayazetyan/redux-exodus.git",
+  "author": "Artashes Bayazetyan <bayazetyan@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "yarn run build",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.2.1",
+    "jest": "^25.4.0",
+    "prettier": "^2.0.5",
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.5",
+    "ts-jest": "^25.4.0",
+    "tslint": "^6.1.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.8.3"
+  },
+  "peerDependencies": {
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.5"
+  }
+}
