@@ -1,2 +1,11 @@
 /node_modules
 /lib
+
+# Android/IntelliJ
+#
+#
+
+# IDE/Editor
+#
+#.idea
+.vscode/
