@@ -1,6 +1,6 @@
 {
   "name": "redux-exodus",
-  "version": "0.0.1",
+  "version": "0.1.0-beta.1",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/bayazetyan/redux-exodus.git",
@@ -13,20 +13,28 @@
     "build": "tsc",
     "prepublishOnly": "yarn run build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "test": "jest"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
     "@types/jest": "^25.2.1",
+    "babel-jest": "^26.1.0",
     "jest": "^25.4.0",
     "prettier": "^2.0.5",
+    "@types/react-redux": "^7.1.9",
     "react-redux": "^7.2.0",
     "redux": "^4.0.5",
+    "redux-mock-store": "^1.5.4",
     "ts-jest": "^25.4.0",
     "tslint": "^6.1.1",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.8.3"
   },
   "peerDependencies": {
+    "@react-native-community/async-storage": "^1.11.0",
     "react-redux": "^7.2.0",
     "redux": "^4.0.5"
   }

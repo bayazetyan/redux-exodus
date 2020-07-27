@@ -1,12 +1,16 @@
 import { Action } from 'redux';
 import { CreateActionWrapper } from './createAction';
+import Storage from '../services/Storage';
 
 
-
-export default function createReducer(actions: Record<string, CreateActionWrapper>, defaultState:  Record<string, any>, storeKey: string) {
+export default function createReducer(actions: Record<string, CreateActionWrapper>, defaultState:  Record<string, any>, storeKey?: string) {
   let handlers = {}
+  let actionsName: Record<string, string> = {}
+
   Object.values(actions).forEach(a => {
     const b = a.reducerHandler
+    a.saveDefaultData(defaultState)
+    actionsName = {...actionsName, ...a.storeKey}
     handlers = { ...handlers, ...b }
   });
 
@@ -25,7 +29,9 @@ export default function createReducer(actions: Record<string, CreateActionWrappe
     const state: Record<string, any> = {}
 
     Object.keys(defaultState).forEach((key: string) => {
-      state[key] = { payload: defaultState[key] }
+      const storageValue = Storage.get(actionsName[key])
+
+      state[key] = storageValue || { payload: defaultState[key] }
     })
 
     return state
@@ -34,7 +40,7 @@ export default function createReducer(actions: Record<string, CreateActionWrappe
   return (s: Object, action: Action) => {
     const reducer = combineReducers(handlers);
     const state = s || createDefaultState();
-    console.log('::::: LOG ::::: createDefaultState()', state, action);
+
     return reducer(state, action);
   }
 }
