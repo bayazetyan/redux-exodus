@@ -1,4 +1,6 @@
 import LocaleStorage from './localeStorage';
+import { Store } from 'redux';
+import { PAYLOAD_STATUS } from '../constants';
 
 interface IStorage {
   get: (key: string, defaultValue?: string) => string | Boolean | Promise<string | Boolean | undefined>
@@ -8,7 +10,7 @@ interface IStorage {
 
 class Storage {
   public isNative: boolean = false
-  public storage : IStorage = LocaleStorage
+  public storage : IStorage | any = LocaleStorage
   public test: any
 
   constructor() {
@@ -19,8 +21,54 @@ class Storage {
     this.storage = LocaleStorage
   }
 
-  get = (key: string, defaultValue?: string) =>  {
-    const result = this.storage.get(key, defaultValue)
+  getStorageKeys = async () => {
+    return await this.storage.getAllKeys()
+  }
+
+  persistsStore = (store: Store) => {
+    ;(async () => {
+      if (this.isNative) {
+        const storageKeys = await this.getStorageKeys()
+        const keys = storageKeys.filter((key: string) => key.includes('@_EXODUS_'))
+
+        const _data = await this.storage.multiGet(keys)
+        for (const d of _data) {
+          store.dispatch({
+            type: d[0].split("@_EXODUS_")[1],
+            data: {
+              payload: JSON.parse(d[1]),
+              error: null,
+              status: PAYLOAD_STATUS.SUCCESS,
+            }
+          })
+        }
+      } else {
+        const storageKeys = Object.entries<string | undefined>(this.storage).filter(key => key[0].includes('@_EXODUS_'))
+        console.log('LOG ::::::> storageKeys <::::::',storageKeys)
+        for (const d of storageKeys) {
+          if ((d[1])){
+            store.dispatch({
+              type: d[0].split("@_EXODUS_")[1],
+              data: {
+                payload: JSON.parse(d[1]),
+                error: null,
+                status: PAYLOAD_STATUS.SUCCESS,
+              }
+            })
+          }
+        }
+      }
+    })()
+  }
+
+  setStorage = (storage: any) => {
+    this.storage = storage
+  }
+
+  get = async (key: string, defaultValue?: string) =>  {
+    const result = this.isNative
+      ? await this.storage.getItem(key, defaultValue)
+      : this.storage.get(key, defaultValue)
 
     if (typeof result === 'string') {
       try{
@@ -34,7 +82,12 @@ class Storage {
   }
 
   set = (key: string, value: string) => {
-    this.storage.set(key, JSON.stringify(value))
+    if (this.isNative) {
+      this.storage.setItem(key, JSON.stringify(value))
+    } else {
+      this.storage.set(key, JSON.stringify(value))
+    }
+
   }
   remove = (key: string) => this.storage.remove(key)
 }

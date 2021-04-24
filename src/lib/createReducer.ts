@@ -1,6 +1,5 @@
 import { Action } from 'redux';
 import { CreateActionWrapper } from './createAction';
-import Storage from '../services/Storage';
 
 export default function createReducer(actions: Record<string, CreateActionWrapper>, defaultState:  Record<string, any>, storeKey?: string) {
   let handlers = {}
@@ -28,9 +27,7 @@ export default function createReducer(actions: Record<string, CreateActionWrappe
     const state: Record<string, any> = {}
 
     Object.keys(defaultState).forEach((key: string) => {
-      const storageValue = !Storage.isNative ? Storage.get(actionsName[key]) : undefined
-
-      state[key] = storageValue || { payload: defaultState[key] }
+      state[key] = { payload: defaultState[key] }
     })
 
     return state

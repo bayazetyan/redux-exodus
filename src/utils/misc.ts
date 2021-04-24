@@ -10,6 +10,10 @@ export function isObject(value: any): value is Object {
   return typeof value === 'object' && !isArray(value) && !isNull(value);
 }
 
+export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
+  return key in obj;
+}
+
 export function cloneObject(value: Object) {
   const stringify = JSON.stringify(value)
 

@@ -1,6 +1,9 @@
 import { Dispatch } from 'redux';
 
-import { PAYLOAD_STATUS, STATUS_PREFIX } from '../constants';
+import { CRUD_ACTIONS, CRUD_PREFIX, PAYLOAD_STATUS, STATUS_PREFIX } from '../constants';
+import { APICalls } from '../lib/createCRUDAction';
+import { hasKey } from './misc';
+import Storage from '../services/Storage';
 
 
 export function generateActionName(name: string): string {
@@ -17,13 +20,64 @@ export function generateActionName(name: string): string {
   return ''
 }
 
-export function getActionName(name: string, status: PAYLOAD_STATUS) {
+export function generateCRUDActionName(name: string, apiCalls: APICalls): Record<keyof APICalls, string> {
+  const actions: Record<keyof APICalls, string> = {
+    get: '',
+    create: '',
+    update: '',
+    delete: '',
+  }
+
+  if (name) {
+    const statusPrefix = Object.values(STATUS_PREFIX);
+    const crudPrefix = Object.values(CRUD_PREFIX);
+
+    crudPrefix.forEach((crudPrefix, i) => {
+      let value = '';
+      const key = crudPrefix.replace('_', '').toLocaleLowerCase() as keyof APICalls
+
+      statusPrefix.forEach((prefix: string, index: number) => {
+        if (hasKey(apiCalls, key)) {
+          if (prefix === STATUS_PREFIX[PAYLOAD_STATUS.RESTORE]
+            && crudPrefix !== CRUD_PREFIX[CRUD_ACTIONS.GET]
+          ) {
+            return
+          }
+          const length = crudPrefix === CRUD_PREFIX[CRUD_ACTIONS.GET] ? statusPrefix.length - 1 : statusPrefix.length - 2
+
+          value = `${value}${crudPrefix}${name}${prefix}${index < length ? '|' : ''}`;
+        }
+      });
+      actions[key] = value
+    })
+  }
+
+  return actions
+}
+
+export function getActionName(name: string, status: PAYLOAD_STATUS, crudActionType?: CRUD_ACTIONS) {
+  if (crudActionType) {
+    return CRUD_PREFIX[crudActionType] + name + STATUS_PREFIX[status]
+  }
+
   return name + STATUS_PREFIX[status];
 }
 
-export function dispatchPendingAction(dispatch: Dispatch, name: string, args: any[]) {
+export type DispatchActionsArgs = {
+  name: string
+  args?: any[]
+  error?: any
+  payload?: any
+  dynamicSettings?: any
+  crudActionType?: CRUD_ACTIONS
+  dispatch: Dispatch
+  hasApiCall?: boolean
+  restorePayload?: boolean
+}
+
+export function dispatchPendingAction({dispatch, name, args, crudActionType}: DispatchActionsArgs) {
   dispatch({
-    type: getActionName(name, PAYLOAD_STATUS.PENDING),
+    type: getActionName(name, PAYLOAD_STATUS.PENDING, crudActionType),
     apiCallArguments: args,
     data: {
       status: PAYLOAD_STATUS.PENDING,
@@ -32,30 +86,41 @@ export function dispatchPendingAction(dispatch: Dispatch, name: string, args: an
   })
 }
 
-export function dispatchSuccessAction(dispatch: Dispatch, name: string, payload: any, args: any[]) {
+export function dispatchSuccessAction({dispatch, dynamicSettings, name, payload, args, crudActionType}: DispatchActionsArgs, persists?: boolean) {
+  const type = getActionName(name, PAYLOAD_STATUS.SUCCESS, crudActionType)
   dispatch({
-    type: getActionName(name, PAYLOAD_STATUS.SUCCESS),
+    type: type,
     apiCallArguments: args,
+    dynamicSettings,
     data: {
       payload,
       error: null,
       status: PAYLOAD_STATUS.SUCCESS,
     }
   })
+
+  if (persists) {
+    ;(async () =>{
+      const hasData = await Storage.get('@_EXODUS_' + type)
+      if (!hasData) {
+        Storage.set('@_EXODUS_' + type, payload)
+      }
+    })()
+  }
 }
 
-export function dispatchAction(dispatch: Dispatch, name: string, payload: any) {
+export function dispatchAction({dispatch, name, payload, crudActionType}: DispatchActionsArgs) {
   dispatch({
-    type: getActionName(name, PAYLOAD_STATUS.SUCCESS),
+    type: getActionName(name, PAYLOAD_STATUS.SUCCESS, crudActionType),
     data: {
       payload,
     }
   })
 }
 
-export function dispatchErrorAction(dispatch: Dispatch, name: string, error: any) {
+export function dispatchErrorAction({dispatch, name, error, crudActionType}: DispatchActionsArgs) {
   dispatch({
-    type: getActionName(name, PAYLOAD_STATUS.ERROR),
+    type: getActionName(name, PAYLOAD_STATUS.ERROR, crudActionType),
     data: {
       status: PAYLOAD_STATUS.ERROR,
       error,
@@ -63,11 +128,18 @@ export function dispatchErrorAction(dispatch: Dispatch, name: string, error: any
   })
 }
 
-export function dispatchRestoreAction(dispatch: Dispatch, name: string, payload: any, hasApiCall: boolean, restorePayload: boolean) {
+export function dispatchRestoreAction({
+  name,
+  payload,
+  dispatch,
+  hasApiCall,
+  restorePayload,
+  crudActionType,
+}: DispatchActionsArgs) {
   if (hasApiCall) {
     if (restorePayload) {
       dispatch({
-        type: getActionName(name, PAYLOAD_STATUS.RESTORE),
+        type: getActionName(name, PAYLOAD_STATUS.RESTORE, crudActionType),
         data: {
           payload,
           error: null,
@@ -76,21 +148,21 @@ export function dispatchRestoreAction(dispatch: Dispatch, name: string, payload:
       })
     } else {
       dispatch({
-        type: getActionName(name, PAYLOAD_STATUS.RESTORE),
+        type: getActionName(name, PAYLOAD_STATUS.RESTORE, crudActionType),
         data: {
           error: null,
           status: PAYLOAD_STATUS.SUCCESS,
         }
       })
     }
-    
+
   } else {
     dispatch({
-      type: getActionName(name, PAYLOAD_STATUS.RESTORE),
+      type: getActionName(name, PAYLOAD_STATUS.RESTORE, crudActionType),
       data: {
         payload,
       }
     })
   }
-  
+
 }

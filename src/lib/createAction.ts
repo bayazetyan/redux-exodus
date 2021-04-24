@@ -75,6 +75,8 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
   let defaultState: any;
 
   function wrapper(dispatch: Dispatch): CreateAction {
+    let dynamicSettings = {}
+
     async function action(...args: any[]) {
       if (settings.apiCall) {
         dispatchPendingAction({dispatch, name: settings.name, args})
@@ -89,9 +91,10 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
             dispatchSuccessAction({
               args,
               dispatch,
+              dynamicSettings,
               payload: _result,
               name: settings.name,
-            })
+            }, settings.persists)
 
             if (settings.onSuccess) {
               settings.onSuccess({
@@ -99,23 +102,28 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
                 dispatch,
               })
             }
+            // clear dynamic settings
+            setSettings(null)
 
             return _result
           } else if (!(response instanceof Response) && response && !response.error && !response.errors) {
-            const _response = handleResponse ? handleResponse(response) : response
+            const _response = handleResponse ? await handleResponse(response) : response
 
             dispatchSuccessAction({
               args,
               dispatch,
+              dynamicSettings,
               name: settings.name,
               payload: _response,
-            })
+            }, settings.persists)
             if (settings.onSuccess) {
               settings.onSuccess({
                 dispatch,
                 result: _response,
               })
             }
+            // clear dynamic settings
+            setSettings(null)
 
             return _response
           } else {
@@ -136,6 +144,9 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
               action: () => createAction(settings)(dispatch)(...args),
               result: response?.error || response?.errors,
             })
+            // clear dynamic settings
+            setSettings(null)
+
             return response
           }
         } catch (err) {
@@ -152,6 +163,9 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
             name: settings.name,
             action: () => createAction(settings)(dispatch)(...args),
           })
+          // clear dynamic settings
+          setSettings(null)
+
           return err
         }
       } else {
@@ -166,6 +180,14 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
             dispatch,
           })
         }
+      }
+    }
+
+    function setSettings(_settings: ActionSettings | null) {
+      if (_settings) {
+        dynamicSettings = _settings
+      } else {
+        dynamicSettings = {}
       }
     }
 
@@ -190,6 +212,11 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
 
     action.stop = () => {
       //console.log ('stop')
+    }
+
+    action.settings = (settings: ActionSettings) => {
+      setSettings(settings)
+      return action
     }
 
     action.withCallback = async (...args: any[]) => {
