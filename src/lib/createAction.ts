@@ -1,5 +1,5 @@
 import { Dispatch } from 'redux';
-import { getReducer } from './getReducer';
+import { getReducer } from './reducers/getReducer';
 import EventEmitter from '../helpers/eventEmitter'
 
 import {
@@ -20,14 +20,16 @@ type EventArguments = {
   dispatch: Dispatch
 }
 
-export interface Action {
+export type ActionState<T = any> = {
+  payload?: T
+  status: number
+  error?: string | string[]
+}
+
+export interface Action<T = any> {
   type: string
   apiCallArguments: any[]
-  data: {
-    payload?: any
-    status: number
-    error?: string | string[]
-  }
+  data: ActionState<T>
 }
 
 export interface CreateActionWrapper {
@@ -68,23 +70,29 @@ const DEFAULT_SETTINGS = {
   merge: () => false,
 }
 
-export default function createAction(settings: ActionSettings): CreateActionWrapper {
+function createAction(settings: ActionSettings): CreateActionWrapper {
   const actionName = generateActionName(settings.name)
   let defaultState: any;
 
   function wrapper(dispatch: Dispatch): CreateAction {
     async function action(...args: any[]) {
       if (settings.apiCall) {
-        dispatchPendingAction(dispatch, settings.name, args)
+        dispatchPendingAction({dispatch, name: settings.name, args})
         try {
           const response = await settings.apiCall.apply(null, args)
           const handleResponse = settings.handleResponse || Exodus.defaultSettings.handleResponse;
 
           if (response instanceof Response && response.ok) {
-            const result = response?.json() || response?.text()
-            const _result = handleResponse ? handleResponse(result) : result
+            const result = await response?.json() || await response?.text()
+            const _result = handleResponse ? await handleResponse(result) : result
 
-            dispatchSuccessAction(dispatch, settings.name, _result, args)
+            dispatchSuccessAction({
+              args,
+              dispatch,
+              payload: _result,
+              name: settings.name,
+            })
+
             if (settings.onSuccess) {
               settings.onSuccess({
                 result: _result,
@@ -93,10 +101,15 @@ export default function createAction(settings: ActionSettings): CreateActionWrap
             }
 
             return _result
-          } else if (response) {
+          } else if (!(response instanceof Response) && response && !response.error && !response.errors) {
             const _response = handleResponse ? handleResponse(response) : response
 
-            dispatchSuccessAction(dispatch, settings.name, _response, args)
+            dispatchSuccessAction({
+              args,
+              dispatch,
+              name: settings.name,
+              payload: _response,
+            })
             if (settings.onSuccess) {
               settings.onSuccess({
                 dispatch,
@@ -106,18 +119,27 @@ export default function createAction(settings: ActionSettings): CreateActionWrap
 
             return _response
           } else {
-            dispatchErrorAction(dispatch, settings.name, response.error)
+            dispatchErrorAction({
+              dispatch,
+              name: settings.name,
+              error: response?.error || response?.errors
+            })
             if (settings.onError) {
               settings.onError({
                 dispatch,
-                result: response.error,
+                result: response?.error || response?.errors,
               })
             }
 
-            EventEmitter.emit('onError', { name: settings.name, result: response.error })
+            EventEmitter.emit('onError', {
+              name: settings.name,
+              action: () => createAction(settings)(dispatch)(...args),
+              result: response?.error || response?.errors,
+            })
+            return response
           }
         } catch (err) {
-          dispatchErrorAction(dispatch, settings.name, err)
+          dispatchErrorAction({dispatch, name: settings.name, error: err})
           if (settings.onError) {
             settings.onError({
               dispatch,
@@ -125,14 +147,23 @@ export default function createAction(settings: ActionSettings): CreateActionWrap
             })
           }
 
-          EventEmitter.emit('onError', { name: settings.name, result: err })
+          EventEmitter.emit('onError', {
+            result: err,
+            name: settings.name,
+            action: () => createAction(settings)(dispatch)(...args),
+          })
+          return err
         }
       } else {
-        dispatchAction(dispatch, settings.name, args[0])
+        const result = settings.handleResponse
+          ? await settings.handleResponse(args[0])
+          : args[0]
+
+        dispatchAction({dispatch, name: settings.name, payload: result})
         if (settings.onSuccess) {
           settings.onSuccess({
-            dispatch,
             result: args[0],
+            dispatch,
           })
         }
       }
@@ -141,9 +172,14 @@ export default function createAction(settings: ActionSettings): CreateActionWrap
     // Methods
     action.restore = (restorePayload: boolean = true) => {
       if (settings.key) {
-        dispatchRestoreAction(dispatch, settings.name, defaultState[settings.key], Boolean(settings.apiCall), restorePayload)
+        dispatchRestoreAction({
+          dispatch,
+          restorePayload,
+          name: settings.name,
+          payload: defaultState[settings.key],
+          hasApiCall: Boolean(settings.apiCall),
+        })
       }
-
     }
 
     action.delay = (delay: number, ...args: any[]) => {
@@ -190,3 +226,5 @@ export default function createAction(settings: ActionSettings): CreateActionWrap
 
   return wrapper
 }
+
+export default Object.freeze(createAction)

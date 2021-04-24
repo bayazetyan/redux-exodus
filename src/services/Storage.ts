@@ -7,13 +7,13 @@ interface IStorage {
 }
 
 class Storage {
-  private storage: IStorage
+  public isNative: boolean = false
+  public storage : IStorage = LocaleStorage
+  public test: any
 
   constructor() {
     if (typeof navigator != 'undefined' && navigator.product == 'ReactNative') {
-      import('./asyncStorage').then(module => {
-        this.storage = module
-      })
+      this.isNative = true
     }
 
     this.storage = LocaleStorage

@@ -101,6 +101,24 @@ createAction({
 })
 ```
 
+### handleResponse
+If you need parse api call response manually. The return value of this function will be stored in store.
+
+#### Parameters
+| Name | Required | Type | Description       |
+|:-----|:---------|:-----|:------------------|
+| data | `true`   | any  | Api call response |
+
+```javascript
+createAction({
+  // ...other options
+  handleResponse: (data) => {
+    // your code here
+    return //....
+  } 
+})
+```
+
 ### onSuccess
 This function calls every time after a successful response
 

@@ -1,6 +1,6 @@
-import { ActionSettings, Action } from './createAction';
-import { isObject, isArray, cloneObject } from '../utils/misc';
-import Storage from '../services/Storage'
+import { ActionSettings, Action } from '../createAction';
+import { isObject, isArray, cloneObject } from '../../utils/misc';
+import Storage from '../../services/Storage'
 
 function reduceData(keys: string[], state: any, action: Action) {
   const transformKeys = [...keys]
@@ -31,7 +31,7 @@ function reduceData(keys: string[], state: any, action: Action) {
   }
 }
 
-function mergeData(key: string,state: any, action: Action) {
+export function mergeData(key: string,state: any, action: Action) {
   if (action.type.includes('RESTORE')) {
     return {
       ...state[key],

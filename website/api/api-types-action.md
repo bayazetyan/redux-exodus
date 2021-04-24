@@ -21,4 +21,4 @@ sidebar_label: Action
 
 | Type                 | Default | Required | Description    |
 |:---------------------|:--------|:---------|:---------------|
-| [PayloadData](/api/api-types-payload-data) | -       | Yes      | Action payload |
+| [PayloadData](/api/api-types-payload-data/) | -       | Yes      | Action payload |
