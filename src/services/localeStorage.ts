@@ -33,4 +33,5 @@ export default {
   set,
   get,
   remove,
+  ...window.localStorage
 };

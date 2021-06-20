@@ -1,6 +1,7 @@
 import Exodus from './lib'
 
 export { default as createAction } from './lib/createAction';
+export { default as createCRUDAction } from './lib/createCRUDAction';
 export { default as createReducer } from './lib/createReducer';
 
 // helpers
