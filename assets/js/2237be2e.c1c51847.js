@@ -1,0 +1,1 @@
+(self.webpackChunkredux_exodus=self.webpackChunkredux_exodus||[]).push([[28],{8388:function(e){"use strict";e.exports=JSON.parse('{"allTagsPath":"/redux-exodus/blog/tags","slug":"hola","name":"hola","count":1,"permalink":"/redux-exodus/blog/tags/hola"}')}}]);
