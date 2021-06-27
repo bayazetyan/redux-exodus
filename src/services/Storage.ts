@@ -44,7 +44,6 @@ class Storage {
         }
       } else {
         const storageKeys = Object.entries<string | undefined>(this.storage).filter(key => key[0].includes('@_EXODUS_'))
-        console.log('LOG ::::::> storageKeys <::::::',storageKeys)
         for (const d of storageKeys) {
           if ((d[1])){
             store.dispatch({

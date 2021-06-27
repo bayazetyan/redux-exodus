@@ -11,8 +11,6 @@ import {
   dispatchSuccessAction,
 } from '../utils/action-utils';
 
-import { isFunction } from '../utils/misc';
-
 import Exodus from './index'
 
 type EventArguments = {
@@ -20,9 +18,13 @@ type EventArguments = {
   dispatch: Dispatch
 }
 
+type PENDING = 1
+type ERROR = 0
+type SUCCESS = 2
+
 export type ActionState<T = any> = {
-  payload?: T
-  status: number
+  payload: T
+  status?: ERROR | PENDING | SUCCESS
   error?: string | string[]
 }
 
@@ -40,12 +42,14 @@ export interface CreateActionWrapper {
   storeKey: {
     [key: string]: string
   },
-  (dispatch: Dispatch): Function
+  (dispatch: Dispatch): CreateAction
 }
 
-export interface CreateAction {
-  delay: (delay: number, ...args: any[]) => void,
-  (): void
+export interface CreateAction<T = any> {
+  delay: (delay: number, ...args: any[]) => Promise<T> | void,
+  restore: (restorePayload?: boolean) => void,
+  settings: (settings: ActionSettings) => CreateAction,
+  (...args: any[]): Promise<T> | void
 }
 
 export interface ActionSettings {
@@ -83,43 +87,24 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
         try {
           const response = await settings.apiCall.apply(null, args)
           const handleResponse = settings.handleResponse || Exodus.defaultSettings.handleResponse;
+          const isResponseInstance = response instanceof Response
+          const isSuccess = isResponseInstance ? response.ok : response && !response.error && !response.error
+          const result = isResponseInstance ? await response?.json() || await response?.text() : response
+          const _response = handleResponse ? await handleResponse(result) : result
 
-          if (response instanceof Response && response.ok) {
-            const result = await response?.json() || await response?.text()
-            const _result = handleResponse ? await handleResponse(result) : result
-
+          if (isSuccess) {
             dispatchSuccessAction({
               args,
               dispatch,
               dynamicSettings,
-              payload: _result,
-              name: settings.name,
-            }, settings.persists)
-
-            if (settings.onSuccess) {
-              settings.onSuccess({
-                result: _result,
-                dispatch,
-              })
-            }
-            // clear dynamic settings
-            setSettings(null)
-
-            return _result
-          } else if (!(response instanceof Response) && response && !response.error && !response.errors) {
-            const _response = handleResponse ? await handleResponse(response) : response
-
-            dispatchSuccessAction({
-              args,
-              dispatch,
-              dynamicSettings,
-              name: settings.name,
               payload: _response,
+              name: settings.name,
             }, settings.persists)
+
             if (settings.onSuccess) {
               settings.onSuccess({
-                dispatch,
                 result: _response,
+                dispatch,
               })
             }
             // clear dynamic settings
@@ -130,24 +115,24 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
             dispatchErrorAction({
               dispatch,
               name: settings.name,
-              error: response?.error || response?.errors
+              error: _response?.error || _response?.errors
             })
             if (settings.onError) {
               settings.onError({
                 dispatch,
-                result: response?.error || response?.errors,
+                result: _response?.error || _response?.errors,
               })
             }
 
             EventEmitter.emit('onError', {
               name: settings.name,
-              action: () => createAction(settings)(dispatch)(...args),
-              result: response?.error || response?.errors,
+              action: (...newArgs: any[]) => createAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
+              result: _response?.error || _response?.errors,
             })
             // clear dynamic settings
             setSettings(null)
 
-            return response
+            return _response
           }
         } catch (err) {
           dispatchErrorAction({dispatch, name: settings.name, error: err})
@@ -161,7 +146,7 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
           EventEmitter.emit('onError', {
             result: err,
             name: settings.name,
-            action: () => createAction(settings)(dispatch)(...args),
+            action: (...newArgs: any[]) => createAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
           })
           // clear dynamic settings
           setSettings(null)
@@ -205,29 +190,16 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
     }
 
     action.delay = (delay: number, ...args: any[]) => {
-      setTimeout(() => {
-        action(...args)
-      }, delay);
+      return new Promise((r) => {
+        setTimeout(() => {
+          r(action(...args))
+        }, delay);
+      })
     }
 
-    action.stop = () => {
-      //console.log ('stop')
-    }
-
-    action.settings = (settings: ActionSettings) => {
+    action.settings = (settings: ActionSettings): CreateAction => {
       setSettings(settings)
       return action
-    }
-
-    action.withCallback = async (...args: any[]) => {
-      const callArguments = args.slice(0, args.length - 2)
-      const callback = args[args.length - 1]
-
-      const result = await action(...callArguments)
-
-      if (isFunction(callback)) {
-        callback(result)
-      }
     }
 
     return action

@@ -109,13 +109,23 @@ export function dispatchSuccessAction({dispatch, dynamicSettings, name, payload,
   }
 }
 
-export function dispatchAction({dispatch, name, payload, crudActionType}: DispatchActionsArgs) {
+export function dispatchAction({dispatch, name, payload, crudActionType}: DispatchActionsArgs, persists?: boolean) {
+  const type = getActionName(name, PAYLOAD_STATUS.SUCCESS, crudActionType)
   dispatch({
-    type: getActionName(name, PAYLOAD_STATUS.SUCCESS, crudActionType),
+    type,
     data: {
       payload,
     }
   })
+
+  if (persists) {
+    ;(async () =>{
+      const hasData = await Storage.get('@_EXODUS_' + type)
+      if (!hasData) {
+        Storage.set('@_EXODUS_' + type, payload)
+      }
+    })()
+  }
 }
 
 export function dispatchErrorAction({dispatch, name, error, crudActionType}: DispatchActionsArgs) {

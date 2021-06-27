@@ -1,15 +1,27 @@
 import { Action } from 'redux';
 import { CreateActionWrapper } from './createAction';
+import Actions from '../services/Actions';
+import { hasKey } from '../utils/misc';
 
-export default function createReducer(actions: Record<string, CreateActionWrapper>, defaultState:  Record<string, any>, storeKey?: string) {
+type DefaultActions<T extends keyof any> = {
+  [P in T]: CreateActionWrapper
+}
+
+export default function createReducer<T extends keyof any>(actions: DefaultActions<T>, defaultState:  Record<string, any>, storeKey?: string) {
   let handlers = {}
   let actionsName: Record<string, string> = {}
 
-  Object.values(actions).forEach(a => {
-    const b = a.reducerHandler
-    a.saveDefaultData(defaultState)
-    actionsName = {...actionsName, ...a.storeKey}
-    handlers = { ...handlers, ...b }
+  Object.keys(actions).forEach(key => {
+    const a = hasKey(actions, key) ? actions[key] : null
+
+    if (a) {
+      const b = a.reducerHandler
+      Actions.setAction({[key]: a})
+
+      a.saveDefaultData(defaultState)
+      actionsName = {...actionsName, ...a.storeKey}
+      handlers = { ...handlers, ...b }
+    }
   });
 
   function combineReducers(handlers: Record<string, (state: Object, action: Action) => Object>) {
@@ -33,7 +45,7 @@ export default function createReducer(actions: Record<string, CreateActionWrappe
     return state
   }
 
-  return (s: Object, action: Action) => {
+  return (s: any, action: Action) => {
     const reducer = combineReducers(handlers);
     const state = s || createDefaultState();
 

@@ -1,3 +1,3 @@
-# Redux Exodus (Beta)
+# Redux Exodus
 
-#### documentation [link](https://bayazetyan.github.io/redux-exodus/)
+#### documentation (completed by 70%) [link](https://bayazetyan.github.io/redux-exodus/)

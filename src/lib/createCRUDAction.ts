@@ -22,11 +22,11 @@ const DEFAULT_SETTINGS = {
   merge: () => false,
 }
 
-export interface APICalls {
-  get?: (...args: any[]) => Promise<any>
-  create?: (...args: any[]) => Promise<any>
-  update?: (...args: any[]) => Promise<any>
-  delete?: (...args: any[]) => Promise<any>
+export interface APICalls<T = any> {
+  get?: (...args: any[]) => Promise<T>
+  create?: (...args: any[]) => Promise<T>
+  update?: (...args: any[]) => Promise<T>
+  delete?: (...args: any[]) => Promise<T>
 }
 
 
@@ -41,10 +41,10 @@ export interface CreateCRUDActionWrapper {
   (dispatch: Dispatch): Function
 }
 
-export interface CRUDActionSettings extends ActionSettings {
+export interface CRUDActionSettings<T = any> extends ActionSettings {
   updateKey?: string | number
   localUpdate?: boolean
-  apiCalls: APICalls
+  apiCalls: APICalls<T>
 }
 
 export interface CreateCRUDAction {
@@ -136,7 +136,7 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
 
             EventEmitter.emit('onError', {
               name: settings.name,
-              action: () => createCRUDAction(settings)(dispatch)(...args),
+              action: (...newArgs: any[]) => createCRUDAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
               result: response?.error || response?.errors,
             })
             // clear dynamic settings
@@ -160,7 +160,7 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
           EventEmitter.emit('onError', {
             result: err,
             name: settings.name,
-            action: () => createCRUDAction(settings)(dispatch)(...args),
+            action: (...newArgs: any[]) => createCRUDAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
           })
           // clear dynamic settings
           setSettings(null)

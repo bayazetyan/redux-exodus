@@ -1,6 +1,6 @@
 {
   "name": "redux-exodus",
-  "version": "0.1.0-beta.20",
+  "version": "0.2.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/bayazetyan/redux-exodus.git",
@@ -32,7 +32,6 @@
     "typescript": "^3.8.3"
   },
   "peerDependencies": {
-    "@react-native-community/async-storage": "^1.11.0",
     "react-redux": "^7.2.0",
     "redux": "^4.0.5"
   }
