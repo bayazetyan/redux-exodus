@@ -136,7 +136,7 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
 
             EventEmitter.emit('onError', {
               name: settings.name,
-              action: () => createCRUDAction(settings)(dispatch)(...args),
+              action: (...newArgs: any[]) => createCRUDAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
               result: response?.error || response?.errors,
             })
             // clear dynamic settings
@@ -160,7 +160,7 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
           EventEmitter.emit('onError', {
             result: err,
             name: settings.name,
-            action: () => createCRUDAction(settings)(dispatch)(...args),
+            action: (...newArgs: any[]) => createCRUDAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
           })
           // clear dynamic settings
           setSettings(null)

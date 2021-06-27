@@ -1,12 +1,16 @@
 import { Action } from 'redux';
 import { CreateActionWrapper } from './createAction';
+import Actions from '../services/Actions';
 
 export default function createReducer(actions: Record<string, CreateActionWrapper>, defaultState:  Record<string, any>, storeKey?: string) {
   let handlers = {}
   let actionsName: Record<string, string> = {}
 
-  Object.values(actions).forEach(a => {
+  Object.keys(actions).forEach(key => {
+    const a = actions[key]
     const b = a.reducerHandler
+    Actions.setAction({[key]: a})
+
     a.saveDefaultData(defaultState)
     actionsName = {...actionsName, ...a.storeKey}
     handlers = { ...handlers, ...b }

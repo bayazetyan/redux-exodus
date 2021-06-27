@@ -45,7 +45,9 @@ export interface CreateActionWrapper {
 
 export interface CreateAction {
   delay: (delay: number, ...args: any[]) => void,
-  (): void
+  restore: (restorePayload: boolean) => void,
+  settings: (settings: ActionSettings) => void,
+  (...args: any[]): void
 }
 
 export interface ActionSettings {
@@ -141,7 +143,7 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
 
             EventEmitter.emit('onError', {
               name: settings.name,
-              action: () => createAction(settings)(dispatch)(...args),
+              action: (...newArgs: any[]) => createAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
               result: response?.error || response?.errors,
             })
             // clear dynamic settings
@@ -161,7 +163,7 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
           EventEmitter.emit('onError', {
             result: err,
             name: settings.name,
-            action: () => createAction(settings)(dispatch)(...args),
+            action: (...newArgs: any[]) => createAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
           })
           // clear dynamic settings
           setSettings(null)
@@ -210,24 +212,9 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
       }, delay);
     }
 
-    action.stop = () => {
-      //console.log ('stop')
-    }
-
-    action.settings = (settings: ActionSettings) => {
+    action.settings = (settings: ActionSettings): CreateAction => {
       setSettings(settings)
       return action
-    }
-
-    action.withCallback = async (...args: any[]) => {
-      const callArguments = args.slice(0, args.length - 2)
-      const callback = args[args.length - 1]
-
-      const result = await action(...callArguments)
-
-      if (isFunction(callback)) {
-        callback(result)
-      }
     }
 
     return action
