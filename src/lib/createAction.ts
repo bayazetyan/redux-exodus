@@ -12,6 +12,7 @@ import {
 } from '../utils/action-utils';
 
 import Exodus from './index'
+import { getResponse } from '../helpers/handleResponse';
 
 type EventArguments = {
   result: any,
@@ -87,10 +88,9 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
         try {
           const response = await settings.apiCall.apply(null, args)
           const handleResponse = settings.handleResponse || Exodus.defaultSettings.handleResponse;
-          const isResponseInstance = response instanceof Response
-          const isSuccess = isResponseInstance ? response.ok : response && !response.error && !response.error
-          const result = isResponseInstance ? await response?.json() || await response?.text() : response
-          const _response = handleResponse ? await handleResponse(result) : result
+
+          const { isSuccess, data } = await getResponse(response)
+          const _response = handleResponse ? await handleResponse(data) : data
 
           if (isSuccess) {
             dispatchSuccessAction({
@@ -115,19 +115,19 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
             dispatchErrorAction({
               dispatch,
               name: settings.name,
-              error: _response?.error || _response?.errors
+              error: _response?.error || _response?.errors || _response
             })
             if (settings.onError) {
               settings.onError({
                 dispatch,
-                result: _response?.error || _response?.errors,
+                result: _response?.error || _response?.errors || _response,
               })
             }
 
             EventEmitter.emit('onError', {
               name: settings.name,
               action: (...newArgs: any[]) => createAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
-              result: _response?.error || _response?.errors,
+              result: _response?.error || _response?.errors || _response,
             })
             // clear dynamic settings
             setSettings(null)

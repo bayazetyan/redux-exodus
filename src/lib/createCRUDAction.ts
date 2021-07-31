@@ -1,4 +1,4 @@
-import { Action, ActionSettings, CreateAction, CreateActionWrapper } from './createAction';
+import { Action, ActionSettings } from './createAction';
 import {
   dispatchAction,
   dispatchErrorAction,
@@ -15,6 +15,7 @@ import { getReducer } from './reducers/getReducer';
 import { addReducer } from './reducers/addReducer';
 import { updateReducer } from './reducers/updateReducer';
 import { deleteReducer } from './reducers/deleteReducer';
+import { getResponse } from '../helpers/handleResponse';
 
 const DEFAULT_SETTINGS = {
   name: 'ACTION',
@@ -78,43 +79,23 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
           const response = await settings.apiCalls[crudType]?.apply(null, args)
           const handleResponse = settings.handleResponse || Exodus.defaultSettings.handleResponse;
 
-          if (response instanceof Response && response.ok) {
-            const result = await response?.json() || await response?.text()
-            const _result = handleResponse ? await handleResponse(result) : result
+          const { isSuccess, data } = await getResponse(response)
+          const _response = handleResponse ? await handleResponse(data) : data
 
+          if (isSuccess) {
             dispatchSuccessAction({
               args,
               dispatch,
               dynamicSettings,
-              payload: _result,
-              name: settings.name,
-              crudActionType: crudType,
-            })
-
-            if (settings.onSuccess) {
-              settings.onSuccess({
-                result: _result,
-                dispatch,
-              })
-            }
-            // clear dynamic settings
-            setSettings(null)
-            return _result
-          } else if (!(response instanceof Response) && response && !response.error && !response.errors) {
-            const _response = handleResponse ? handleResponse(response) : response
-
-            dispatchSuccessAction({
-              args,
-              dispatch,
-              dynamicSettings,
-              name: settings.name,
               payload: _response,
+              name: settings.name,
               crudActionType: crudType,
             })
+
             if (settings.onSuccess) {
               settings.onSuccess({
-                dispatch,
                 result: _response,
+                dispatch,
               })
             }
             // clear dynamic settings
@@ -124,20 +105,20 @@ function createCRUDAction(settings: CRUDActionSettings): CreateCRUDActionWrapper
             dispatchErrorAction({
               dispatch,
               name: settings.name,
-              error: response?.error || response?.errors,
+              error: _response?.error || response?.errors,
               crudActionType: crudType,
             })
             if (settings.onError) {
               settings.onError({
                 dispatch,
-                result: response?.error || response?.errors,
+                result: _response?.error || response?.errors,
               })
             }
 
             EventEmitter.emit('onError', {
               name: settings.name,
               action: (...newArgs: any[]) => createCRUDAction(settings)(dispatch).apply(newArgs.length > 0 ? newArgs : args),
-              result: response?.error || response?.errors,
+              result: response?.error || response?.errors || _response,
             })
             // clear dynamic settings
             setSettings(null)
