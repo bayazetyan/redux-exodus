@@ -38,6 +38,10 @@ class Exodus {
       ...settings
     }
   }
+
+  public resetStore = () => {
+    this.defaultSettings?.store?.dispatch({ type: '@EXODUS_RESET_STORE' })
+  }
 }
 
 export default new Exodus()

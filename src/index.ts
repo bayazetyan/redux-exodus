@@ -9,6 +9,7 @@ export * from './lib/createCRUDAction';
 
 // helpers
 export * from './helpers/bindActionCreator';
+export * from './helpers/createRootReducer';
 export * from './lib/globalEvents';
 
 // hooks
