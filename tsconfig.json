@@ -3,7 +3,7 @@
     "target": "es5",
     "declaration": true,
     "module": "esnext",
-    "lib": ["es6", "dom", "es5", "es2017"],
+    "lib": ["es6", "dom", "es5", "es2020"],
     "moduleResolution": "node",
     "outDir": "./lib",
     "strict": true,

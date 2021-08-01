@@ -8,9 +8,11 @@ export * from './lib/createAction';
 export * from './lib/createCRUDAction';
 
 // helpers
+export * from './lib/globalEvents';
+export * from './lib/createCombineAction';
+
 export * from './helpers/bindActionCreator';
 export * from './helpers/createRootReducer';
-export * from './lib/globalEvents';
 
 // hooks
 export * from './hooks/useActions';

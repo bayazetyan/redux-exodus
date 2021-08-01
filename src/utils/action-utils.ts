@@ -101,8 +101,8 @@ export function dispatchSuccessAction({dispatch, dynamicSettings, name, payload,
 
   if (persists) {
     ;(async () =>{
-      const hasData = await Storage.get('@_EXODUS_' + type)
-      if (!hasData) {
+      const storedData = await Storage.get('@_EXODUS_' + type)
+      if (!storedData || (JSON.stringify(payload) !== JSON.stringify(storedData))) {
         Storage.set('@_EXODUS_' + type, payload)
       }
     })()
@@ -120,8 +120,8 @@ export function dispatchAction({dispatch, name, payload, crudActionType}: Dispat
 
   if (persists) {
     ;(async () =>{
-      const hasData = await Storage.get('@_EXODUS_' + type)
-      if (!hasData) {
+      const storedData = await Storage.get('@_EXODUS_' + type)
+      if (!storedData || (JSON.stringify(payload) !== JSON.stringify(storedData))) {
         Storage.set('@_EXODUS_' + type, payload)
       }
     })()

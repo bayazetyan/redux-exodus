@@ -15,12 +15,16 @@ export default function createReducer<T extends keyof any>(actions: DefaultActio
     const a = hasKey(actions, key) ? actions[key] : null
 
     if (a) {
-      const b = a.reducerHandler
-      Actions.setAction({[key]: a})
+      if (a.reducerHandler) {
+        const b = a.reducerHandler
+        Actions.setAction({[key]: a})
 
-      a.saveDefaultData(defaultState)
-      actionsName = {...actionsName, ...a.storeKey}
-      handlers = { ...handlers, ...b }
+        a.saveDefaultData(defaultState)
+        actionsName = {...actionsName, ...a.storeKey}
+        handlers = { ...handlers, ...b }
+      } else {
+        Actions.setAction({[key]: a})
+      }
     }
   });
 
