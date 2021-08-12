@@ -2,9 +2,10 @@ import { Action } from 'redux';
 import { CreateActionWrapper } from './createAction';
 import Actions from '../services/Actions';
 import { hasKey } from '../utils/misc';
+import { CreateCRUDActionWrapper } from './createCRUDAction';
 
 type DefaultActions<T extends keyof any> = {
-  [P in T]: CreateActionWrapper
+  [P in T]: CreateActionWrapper | CreateCRUDActionWrapper
 }
 
 export default function createReducer<T extends keyof any>(actions: DefaultActions<T>, defaultState:  Record<string, any>, storeKey?: string) {

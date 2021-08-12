@@ -9,6 +9,7 @@ import {
   dispatchPendingAction,
   dispatchRestoreAction,
   dispatchSuccessAction,
+  removePersistedData,
 } from '../utils/action-utils';
 
 import Exodus from './index'
@@ -81,6 +82,7 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
 
   function wrapper(dispatch: Dispatch): CreateAction {
     let dynamicSettings = {}
+    removePersistedData(settings.name, settings.persists)
 
     async function action(...args: any[]) {
       if (settings.apiCall) {

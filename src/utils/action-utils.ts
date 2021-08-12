@@ -75,6 +75,28 @@ export type DispatchActionsArgs = {
   restorePayload?: boolean
 }
 
+function persistData(payload: any, type: string, persists?: boolean) {
+  ;(async () =>{
+    const storedData = await Storage.get('@_EXODUS_' + type)
+    if (persists) {
+      if (!storedData || (JSON.stringify(payload) !== JSON.stringify(storedData))) {
+        Storage.set('@_EXODUS_' + type, payload)
+      }
+    }
+  })()
+}
+
+export function removePersistedData(name: string, persists?: boolean) {
+  const type = getActionName(name, PAYLOAD_STATUS.SUCCESS)
+
+  ;(async () =>{
+    const storedData = await Storage.get('@_EXODUS_' + type)
+    if (storedData && !persists) {
+      Storage.remove('@_EXODUS_' + type)
+    }
+  })()
+}
+
 export function dispatchPendingAction({dispatch, name, args, crudActionType}: DispatchActionsArgs) {
   dispatch({
     type: getActionName(name, PAYLOAD_STATUS.PENDING, crudActionType),
@@ -99,14 +121,7 @@ export function dispatchSuccessAction({dispatch, dynamicSettings, name, payload,
     }
   })
 
-  if (persists) {
-    ;(async () =>{
-      const storedData = await Storage.get('@_EXODUS_' + type)
-      if (!storedData || (JSON.stringify(payload) !== JSON.stringify(storedData))) {
-        Storage.set('@_EXODUS_' + type, payload)
-      }
-    })()
-  }
+  persistData(payload, type, persists)
 }
 
 export function dispatchAction({dispatch, name, payload, crudActionType}: DispatchActionsArgs, persists?: boolean) {
@@ -118,14 +133,7 @@ export function dispatchAction({dispatch, name, payload, crudActionType}: Dispat
     }
   })
 
-  if (persists) {
-    ;(async () =>{
-      const storedData = await Storage.get('@_EXODUS_' + type)
-      if (!storedData || (JSON.stringify(payload) !== JSON.stringify(storedData))) {
-        Storage.set('@_EXODUS_' + type, payload)
-      }
-    })()
-  }
+  persistData(payload, type, persists)
 }
 
 export function dispatchErrorAction({dispatch, name, error, crudActionType}: DispatchActionsArgs) {

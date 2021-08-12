@@ -1,7 +1,8 @@
 import { CreateActionWrapper } from '../lib/createAction';
+import { CreateCRUDActionWrapper } from '../lib/createCRUDAction';
 
 export type ActionList<T = any> = {
-  [key in keyof T]-?: CreateActionWrapper
+  [key in keyof T]-?: CreateActionWrapper | CreateCRUDActionWrapper
 }
 
 class Actions {
@@ -15,7 +16,7 @@ class Actions {
     return Actions.actions as ActionList<T>
   }
 
-  static getAction = (name: string): CreateActionWrapper => {
+  static getAction = (name: string): CreateActionWrapper | CreateCRUDActionWrapper => {
     return Actions.actions[name]
   }
 }

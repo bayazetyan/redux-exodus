@@ -69,15 +69,11 @@ class Storage {
       ? await this.storage.getItem(key, defaultValue)
       : this.storage.get(key, defaultValue)
 
-    if (typeof result === 'string') {
-      try{
-        return JSON.parse(result)
-      } catch(e) {
-        return result
-      }
+    try{
+      return JSON.parse(result)
+    } catch(e) {
+      return result
     }
-
-    return result
   }
 
   set = (key: string, value: string) => {
@@ -88,7 +84,13 @@ class Storage {
     }
 
   }
-  remove = (key: string) => this.storage.remove(key)
+  remove = (key: string) => {
+    if (this.isNative) {
+      this.storage.removeItem(key)
+    } else {
+      this.storage.remove(key)
+    }
+  }
 }
 
 export default new Storage()
