@@ -160,7 +160,7 @@ function createAction(settings: ActionSettings): CreateActionWrapper {
           ? await settings.handleResponse(args[0])
           : args[0]
 
-        dispatchAction({dispatch, name: settings.name, payload: result})
+        dispatchAction({dispatch, name: settings.name, payload: result}, settings.persists)
         if (settings.onSuccess) {
           settings.onSuccess({
             result: args[0],
