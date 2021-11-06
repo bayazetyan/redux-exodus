@@ -8,7 +8,7 @@ export async function getResponse(response: Response | Record<string, any>): Pro
   }
 
   const result = response instanceof Response
-    ? await response?.json() || await response?.text()
+    ? response.headers.get('Content-type')?.includes('json') ? await response?.json() : await response?.text()
     : response
 
   return { isSuccess, data: result }
