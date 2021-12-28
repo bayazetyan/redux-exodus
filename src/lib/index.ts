@@ -39,8 +39,10 @@ class Exodus {
     }
   }
 
-  public resetStore = () => {
-    this.defaultSettings?.store?.dispatch({ type: '@EXODUS_RESET_STORE' })
+  public resetStore = (excludedReducers: string[]) => {
+    this.defaultSettings?.store?.dispatch(
+      { type: '@EXODUS_RESET_STORE', payload: { excludedReducers } }
+    )
   }
 }
 
